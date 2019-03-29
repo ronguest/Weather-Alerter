@@ -66,4 +66,6 @@ void setup() {
 void loop() {
 	weather.updateConditions(DS_KEY, DS_location);
 	delay(30000);
+	yield();
+	delay(30000);
 }
