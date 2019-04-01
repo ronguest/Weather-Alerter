@@ -68,4 +68,8 @@ void loop() {
 	delay(30000);
 	yield();
 	delay(30000);
+	yield();
+	delay(30000);
+	yield();
+	delay(30000);
 }

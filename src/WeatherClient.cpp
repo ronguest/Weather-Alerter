@@ -1,9 +1,15 @@
 //
-//  Copyright (C) 2017-2019 Ronald Guest <http://ronguest.net>
+//  Copyright (C) 2027-2029 Ronald Guest <http://ronguest.net>
 //
 
 #include "WeatherClient.h"
 #include <WiFi101.h>
+
+String parents[parentSize];
+uint16_t parentIndex = 0;
+boolean inArray = false;
+uint16_t dailyIndex;
+uint16_t alertIndex;
 
 WeatherClient::WeatherClient(boolean foo) {
 }
@@ -20,7 +26,7 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     parser.setListener(this);
     WiFiClient client;
     // Red LED output on the M0 Feather
-    const int ledPin = 13;
+    const int ledPin = 23;
 
     Serial.print("Connect to Server: ");
     Serial.println(server);
@@ -77,62 +83,61 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
 
 // The key basically tells us which set of data from the JSON is coming
 void WeatherClient::key(String key) {
-    currentKey = String(key);
+	//Serial.println("Push key " + key);
+	push(key);
 }
 
-// This is the heart of processing the JSON file
-// The JSON parser calls the appropriate function as it encounters them in the JSON stream
-// Some are arrays of values so we index those as we get them
-// There is a bounds check at the end of the function.
-// If a value = "null" for several of the below we ignore those due to how the Wunderground feed works
-// Should only be null afer 3pm which is an arbitrary cut off by WU ?
+// Time to use the parent() to figure out which section of JSON we are in
+// and current() to know which value we got
 void WeatherClient::value(String value) {
-	if (currentParent == "currently") {
-		if (currentKey == "nearestStormDistance") { 
+	if (parent() == "currently") {
+		if (current() == "nearestStormDistance") { 
 			Serial.println("nearestStormDistance " + value);
 			nearestStormDistance = value.toInt();
 		}
-		if (currentKey == "summary") {  
+		if (current() == "summary") {  
 			Serial.println("summary " + value);
 			summary = value;
 		}
-		if (currentKey == "currentIcon") { 
+		if (current() == "currentIcon") { 
 			Serial.println("currentIcon " + value);
 			currentIcon = value;
 		}
-		if (currentKey == "precipProbability") { 
+		if (current() == "precipProbability") { 
 			Serial.println("precipProbability " + value);
 			precipProbability = value.toInt();
 		}
-		if (currentKey == "temperature") { 
+		if (current() == "temperature") { 
 			Serial.println("temperature " + value);
 			temperature = value.toFloat();
 		}
-		if (currentKey == "windSpeed") { 
+		if (current() == "windSpeed") { 
 			Serial.println("windSpeed " + value);
 			windSpeed = value.toInt();
 		}
-		if (currentKey == "windGust") { 
+		if (current() == "windGust") { 
 			Serial.println("windGust " + value);
 			windGust = value.toInt();
 		}
-	} else if (currentParent == "alerts") {
-		if (currentKey == "description") { 
+	} else if (parent() == "alerts") {
+		if (current() == "description") { 
 			Serial.println("description " + value);
 			description[alertIndex] = value;
 		}
-		if (currentKey == "severity") { 
+		if (current() == "severity") { 
 			Serial.println("severity " + value);
 			severity[alertIndex] = value;
 		}		
-	} else if (currentParent == "data") {
-		if (currentKey == "temperatureMax") {
-			Serial.println("temperatureMax " + value);
-			temperatureMax[dailyIndex++] = value.toFloat();
+	} else if (parent() == "data") {
+		if (current() == "temperatureMax") {
+			Serial.print("save tempMax to index " + String(dailyIndex));
+			Serial.println(", temperatureMax " + value);
+			temperatureMax[dailyIndex] = value.toFloat();
 		}
 	} else {
-		//Serial.println("unused currentParent " + currentParent);
+		//Serial.println("unused parent " + parent());
 	}
+	pop();
 }
 
 void WeatherClient::whitespace(char c) {
@@ -140,35 +145,82 @@ void WeatherClient::whitespace(char c) {
 }
 
 void WeatherClient::startDocument() {
-    //Serial.println(F("start document"));
+    Serial.println(F("start document"));
+	alertIndex = 0;
+	dailyIndex = 0;
 }
 void WeatherClient::endDocument() {
+    Serial.println(F("end document"));
+	for (int i=0; i<dailyIndex; i++) {
+		Serial.println(temperatureMax[i]);
+	}
 }
 
 // startArray lets us know the key has a set of values
-// When we see this we set the index to Zero
-// It should be incremented in the value function when a value is added
 void WeatherClient::startArray() {
-    Serial.println("startArray");
-	Serial.println("currentParent " + currentParent);
-	Serial.println("currentKey " + currentKey);
-	if (currentParent == "alerts") {
-		alertIndex = 0;
-	} else if (currentParent == "daily") {
-		dailyIndex = 0;
-	}
+	inArray = true;
+    Serial.print("startArray ");
+	Serial.print("parent " + parent());
+	Serial.println(", current " + current());
 }
-// We don't need to do anything special when we get an endArray
 void WeatherClient::endArray() {
-    //Serial.println("endArray");
+	inArray = false;
+    Serial.print("endArray ");
+	Serial.print("parent " + parent());
+	Serial.println(", current " + current());
 }
 
 void WeatherClient::startObject() {
-    // I have not seen this to be reliable (?). Unused for now.
-    currentParent = currentKey;
-    //Serial.println("startObject: " + currentParent);
+	Serial.print("In startObject ");
+	Serial.print("parent " + parent());
+	Serial.println(", current " + current());
 }
 void WeatherClient::endObject() {
-    //Serial.println("endObject: " + currentParent);
-    currentParent = "";
+    Serial.print("endObject before pop: ");
+	Serial.print("parent " + parent());	Serial.println(", current " + current());
+	if (parent() == "alerts") {
+		Serial.println("Increase alertIndex");
+		alertIndex++;
+	} else if (parent() == "daily") {
+		Serial.println("Increase dailyIndex");
+		dailyIndex++;
+	}	
+
+	// Objects in an array don't have a key/name so we can't pop in that case or we lost parentage
+	if (!inArray) {
+		pop();
+	}
+}
+
+void WeatherClient::push(String s) {
+	if (parentIndex < parentSize - 2) {
+		parents[parentIndex++] = s;
+	} else {
+		Serial.println("parentIndex overrun");
+	}
+}
+
+String WeatherClient::pop() {
+	if (parentIndex > 0) {
+		parentIndex--;
+		return parents[parentIndex];
+	} else {
+		return "";
+	}
+}
+
+String WeatherClient::parent() {
+	if (parentIndex > 1) {
+		return parents[parentIndex-2];
+	 } else {
+		 return "";
+	 }
+}
+
+String WeatherClient::current() {
+	if (parentIndex > 0) {
+		return parents[parentIndex-1];
+	 } else {
+		return "";
+	 }
 }

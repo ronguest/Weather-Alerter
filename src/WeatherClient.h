@@ -11,12 +11,12 @@
 
 const int maxAlerts = 32;
 const uint16_t maxDaily = 32;
+const uint16_t parentSize = 10;
 
 class WeatherClient : public JsonListener {
    private:
     void doUpdate(int port, char server[], String url);
-    String currentKey;
-    String currentParent = "";
+	String currentKey;
     // "currently" condition values
     String currentIcon;
     uint16_t nearestStormDistance;
@@ -32,8 +32,11 @@ class WeatherClient : public JsonListener {
     String severity[maxAlerts];
     String title[maxAlerts];
 	// "daily" values
-	uint16_t dailyIndex;
 	double temperatureMax[maxDaily];
+	void push(String s);
+	String pop();
+	String parent();
+	String current();
 
    public:
     WeatherClient(boolean foo);
