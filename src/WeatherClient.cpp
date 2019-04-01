@@ -111,6 +111,10 @@ void WeatherClient::value(String value) {
 			Serial.println("temperature " + value);
 			temperature = value.toFloat();
 		}
+		if (current() == "humidity") { 
+			Serial.println("humidity " + value);
+			humidity = value.toInt();
+		}
 		if (current() == "windSpeed") { 
 			Serial.println("windSpeed " + value);
 			windSpeed = value.toInt();
@@ -129,11 +133,11 @@ void WeatherClient::value(String value) {
 			severity[alertIndex] = value;
 		}		
 	} else if (parent() == "data") {
-		if (current() == "temperatureMax") {
+/* 		if (current() == "temperatureMax") {
 			Serial.print("save tempMax to index " + String(dailyIndex));
 			Serial.println(", temperatureMax " + value);
 			temperatureMax[dailyIndex] = value.toFloat();
-		}
+		} */
 	} else {
 		//Serial.println("unused parent " + parent());
 	}
@@ -151,9 +155,9 @@ void WeatherClient::startDocument() {
 }
 void WeatherClient::endDocument() {
     Serial.println(F("end document"));
-	for (int i=0; i<dailyIndex; i++) {
-		Serial.println(temperatureMax[i]);
-	}
+	// for (int i=0; i<dailyIndex; i++) {
+	// 	Serial.println(temperatureMax[i]);
+	// }
 }
 
 // startArray lets us know the key has a set of values

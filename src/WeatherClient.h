@@ -23,8 +23,9 @@ class WeatherClient : public JsonListener {
     uint16_t precipProbability;
     String summary;
     double temperature;
-    double windSpeed;
-    double windGust;
+    uint16_t windSpeed;
+    uint16_t windGust;
+	uint16_t humidity;
     // "alerts" values
 	uint16_t alertIndex;
     String description[maxAlerts];
@@ -32,7 +33,8 @@ class WeatherClient : public JsonListener {
     String severity[maxAlerts];
     String title[maxAlerts];
 	// "daily" values
-	double temperatureMax[maxDaily];
+	// double temperatureMax[maxDaily];
+	// Stack functions to keep track of keyword hierarchy/context
 	void push(String s);
 	String pop();
 	String parent();
