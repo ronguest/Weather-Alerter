@@ -46,6 +46,11 @@ class WeatherClient : public JsonListener {
     uint16_t getNearestStormDistance();
     uint16_t getPrecipProbability();
     String getSummary();
+	uint16_t getHumidity();
+	uint16_t getWindSpeed();
+	uint16_t getWindGust();
+	double getTemperature();
+	String getCurrentIcon();
 
     virtual void whitespace(char c);
     virtual void startDocument();

@@ -81,6 +81,30 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     digitalWrite(ledPin, LOW);  // Turn LED off to show we're done
 }
 
+String WeatherClient::getSummary() {
+	return summary;
+}
+
+String WeatherClient::getCurrentIcon() {
+	return currentIcon;
+}
+
+double WeatherClient::getTemperature() {
+	return temperature;
+}
+
+uint16_t WeatherClient::getWindSpeed() {
+	return windSpeed;
+}
+
+uint16_t WeatherClient::getWindGust() {
+	return windGust;
+}
+
+uint16_t WeatherClient::getHumidity() {
+	return humidity;
+}
+
 // The key basically tells us which set of data from the JSON is coming
 void WeatherClient::key(String key) {
 	//Serial.println("Push key " + key);
@@ -92,15 +116,15 @@ void WeatherClient::key(String key) {
 void WeatherClient::value(String value) {
 	if (parent() == "currently") {
 		if (current() == "nearestStormDistance") { 
-			Serial.println("nearestStormDistance " + value);
+			// Serial.println("nearestStormDistance " + value);
 			nearestStormDistance = value.toInt();
 		}
 		if (current() == "summary") {  
 			Serial.println("summary " + value);
 			summary = value;
 		}
-		if (current() == "currentIcon") { 
-			Serial.println("currentIcon " + value);
+		if (current() == "icon") { 
+			Serial.println("icon " + value);
 			currentIcon = value;
 		}
 		if (current() == "precipProbability") { 
@@ -113,7 +137,8 @@ void WeatherClient::value(String value) {
 		}
 		if (current() == "humidity") { 
 			Serial.println("humidity " + value);
-			humidity = value.toInt();
+			double humid_float = value.toFloat()*100;
+			humidity = (int) humid_float;
 		}
 		if (current() == "windSpeed") { 
 			Serial.println("windSpeed " + value);
@@ -149,12 +174,12 @@ void WeatherClient::whitespace(char c) {
 }
 
 void WeatherClient::startDocument() {
-    Serial.println(F("start document"));
+    // Serial.println(F("start document"));
 	alertIndex = 0;
 	dailyIndex = 0;
 }
 void WeatherClient::endDocument() {
-    Serial.println(F("end document"));
+    // Serial.println(F("end document"));
 	// for (int i=0; i<dailyIndex; i++) {
 	// 	Serial.println(temperatureMax[i]);
 	// }
@@ -163,30 +188,30 @@ void WeatherClient::endDocument() {
 // startArray lets us know the key has a set of values
 void WeatherClient::startArray() {
 	inArray = true;
-    Serial.print("startArray ");
-	Serial.print("parent " + parent());
-	Serial.println(", current " + current());
+    // Serial.print("startArray ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
 }
 void WeatherClient::endArray() {
 	inArray = false;
-    Serial.print("endArray ");
-	Serial.print("parent " + parent());
-	Serial.println(", current " + current());
+    // Serial.print("endArray ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
 }
 
 void WeatherClient::startObject() {
-	Serial.print("In startObject ");
-	Serial.print("parent " + parent());
-	Serial.println(", current " + current());
+	// Serial.print("In startObject ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
 }
 void WeatherClient::endObject() {
-    Serial.print("endObject before pop: ");
-	Serial.print("parent " + parent());	Serial.println(", current " + current());
+    // Serial.print("endObject before pop: ");
+	// Serial.print("parent " + parent());	Serial.println(", current " + current());
 	if (parent() == "alerts") {
-		Serial.println("Increase alertIndex");
+		// Serial.println("Increase alertIndex");
 		alertIndex++;
 	} else if (parent() == "daily") {
-		Serial.println("Increase dailyIndex");
+		// Serial.println("Increase dailyIndex");
 		dailyIndex++;
 	}	
 
