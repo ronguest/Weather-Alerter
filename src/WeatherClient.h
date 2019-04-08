@@ -49,6 +49,8 @@ class WeatherClient : public JsonListener {
 	uint16_t getHumidity();
 	uint16_t getWindSpeed();
 	uint16_t getWindGust();
+	uint16_t getAlertCount();
+	String getAlertDescription(uint16_t ind);
 	double getTemperature();
 	String getCurrentIcon();
 

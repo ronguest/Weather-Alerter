@@ -105,6 +105,14 @@ uint16_t WeatherClient::getHumidity() {
 	return humidity;
 }
 
+uint16_t WeatherClient::getAlertCount() {
+	return alertIndex;
+}
+
+String WeatherClient::getAlertDescription(uint16_t i) {
+	return description[i];
+}
+
 // The key basically tells us which set of data from the JSON is coming
 void WeatherClient::key(String key) {
 	//Serial.println("Push key " + key);

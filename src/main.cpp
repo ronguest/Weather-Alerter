@@ -105,13 +105,22 @@ void drawUpdate() {
 	tft.setCursor(350,75);
 	tft.print(weather.getHumidity());
 	tft.print("\045");
+
+	tft.setCursor(30,130);
 	tft.setFont(&smallFont);
+	if (weather.getAlertCount() > 0 ) {
+		Serial.println("Alert count: " + String(weather.getAlertCount()));
+		tft.print("Alert: ");
+		tft.print(weather.getAlertDescription(0));
+	} else {
+		tft.print("No alerts");
+	}
 	tft.setCursor(220,240);
 	tft.print(weather.getWindSpeed());
-	tft.print("mph");
+	tft.print(" mph");
 	tft.setCursor(220,300);
 	tft.print(weather.getWindGust());
-	tft.print("mph");
+	tft.print(" mph");
 }
 
 // Map from Dark Sky's icon names to ones we know on SD card
