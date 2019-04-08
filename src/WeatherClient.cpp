@@ -127,7 +127,7 @@ String WeatherClient::getRainDay() {
 
 // The key basically tells us which set of data from the JSON is coming
 void WeatherClient::key(String key) {
-	//Serial.println("Push key " + key);
+	Serial.println("Push key " + key);
 	push(key);
 }
 
@@ -169,6 +169,7 @@ void WeatherClient::value(String value) {
 			windGust = value.toInt();
 		}
 	} else if (parent() == "alerts") {
+		Serial.println("Got alerts");
 		if (current() == "description") { 
 			Serial.println("description " + value);
 			description[alertIndex] = value;
@@ -194,7 +195,9 @@ void WeatherClient::value(String value) {
 			Serial.println("rainDay " + rainDay);
 		}
 	}
-	pop();
+	if (current() != "regions") {
+		pop();
+	}
 }
 
 void WeatherClient::whitespace(char c) {
@@ -205,6 +208,7 @@ void WeatherClient::startDocument() {
     // Serial.println(F("start document"));
 	alertIndex = 0;
 	dailyIndex = 0;
+	parentIndex = 0;		// Empty the stack for each document we process
 }
 void WeatherClient::endDocument() {
     // Serial.println(F("end document"));
@@ -216,27 +220,30 @@ void WeatherClient::endDocument() {
 // startArray lets us know the key has a set of values
 void WeatherClient::startArray() {
 	inArray = true;
-    // Serial.print("startArray ");
-	// Serial.print("parent " + parent());
-	// Serial.println(", current " + current());
+    Serial.print("startArray ");
+	Serial.print("parent " + parent());
+	Serial.println(", current " + current());
 }
 void WeatherClient::endArray() {
 	inArray = false;
-    // Serial.print("endArray ");
-	// Serial.print("parent " + parent());
-	// Serial.println(", current " + current());
+    Serial.print("endArray ");
+	Serial.print("parent " + parent());
+	Serial.println(", current " + current());
+	if (current() == "regions") {
+		pop();
+	}
 }
 
 void WeatherClient::startObject() {
-	// Serial.print("In startObject ");
-	// Serial.print("parent " + parent());
-	// Serial.println(", current " + current());
+	Serial.print("In startObject ");
+	Serial.print("parent " + parent());
+	Serial.println(", current " + current());
 }
 void WeatherClient::endObject() {
-    // Serial.print("endObject before pop: ");
-	// Serial.print("parent " + parent());	Serial.println(", current " + current());
-	if (parent() == "alerts") {
-		// Serial.println("Increase alertIndex");
+    Serial.print("endObject before pop: ");
+	Serial.print("parent " + parent());	Serial.println(", current " + current());
+	if (current() == "alerts") {
+		Serial.println("Increase alertIndex");
 		alertIndex++;
 	} else if (parent() == "daily") {
 		// Serial.println("Increase dailyIndex");
@@ -260,6 +267,7 @@ void WeatherClient::push(String s) {
 String WeatherClient::pop() {
 	if (parentIndex > 0) {
 		parentIndex--;
+		Serial.println("Pop " + parents[parentIndex]);
 		return parents[parentIndex];
 	} else {
 		return "";
