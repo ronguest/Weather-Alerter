@@ -18,6 +18,10 @@ void WeatherClient::updateConditions(String apiKey, String location) {
     doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
 }
 
+void WeatherClient::updateLocal(String device, String appKey, String apiKey) {
+  doUpdate(443, "api.ambientweather.net", "/v1/devices/" + device + "?applicationKey=" + appKey + "&apiKey=" + apiKey + "&limit=1");
+}
+
 void WeatherClient::doUpdate(int port, char server[], String url) {
     JsonStreamingParser parser;
     // It might be better to have separate objects for each weather data source
@@ -113,6 +117,14 @@ String WeatherClient::getAlertDescription(uint16_t i) {
 	return description[i];
 }
 
+String WeatherClient::getRainIn() {
+	return rainIn;
+}
+
+String WeatherClient::getRainDay() {
+	return rainDay;
+}
+
 // The key basically tells us which set of data from the JSON is coming
 void WeatherClient::key(String key) {
 	//Serial.println("Push key " + key);
@@ -173,6 +185,14 @@ void WeatherClient::value(String value) {
 		} */
 	} else {
 		//Serial.println("unused parent " + parent());
+		if (current() == "hourlyrainin") {
+			rainIn = value;
+			Serial.println("rainIn " + rainIn);
+		}
+		if (current() == "dailyrainin") {
+			rainDay = value;
+			Serial.println("rainDay " + rainDay);
+		}
 	}
 	pop();
 }

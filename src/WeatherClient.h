@@ -26,6 +26,9 @@ class WeatherClient : public JsonListener {
     uint16_t windSpeed;
     uint16_t windGust;
 	uint16_t humidity;
+	String rainIn;
+	String rainDay;
+
     // "alerts" values
 	uint16_t alertIndex;
     String description[maxAlerts];
@@ -43,6 +46,7 @@ class WeatherClient : public JsonListener {
    public:
     WeatherClient(boolean foo);
     void updateConditions(String appKey, String location);
+    void updateLocal(String device, String appKey, String apiKey);
     uint16_t getNearestStormDistance();
     uint16_t getPrecipProbability();
     String getSummary();
@@ -53,6 +57,8 @@ class WeatherClient : public JsonListener {
 	String getAlertDescription(uint16_t ind);
 	double getTemperature();
 	String getCurrentIcon();
+	String getRainIn();
+	String getRainDay();
 
     virtual void whitespace(char c);
     virtual void startDocument();

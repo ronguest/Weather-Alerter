@@ -79,6 +79,7 @@ void loop() {
     // Check if we should update weather information
     if ((millis() - lastDownloadUpdate) > (1000 * UPDATE_INTERVAL_SECS)) {
 		weather.updateConditions(DS_KEY, DS_location);
+		weather.updateLocal(AW_DEVICE, AW_APP_KEY, AW_API_KEY);
 		lastDownloadUpdate = millis();
 		drawUpdate();
     }
