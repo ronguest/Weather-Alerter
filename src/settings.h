@@ -48,6 +48,9 @@
 int keyIndex = 0;                // your network key Index number (needed only for WEP)
 int status = WL_IDLE_STATUS;
 
+// Red LED output on the M0 Feather
+const int ledPin = 13;
+
 // NTP Servers:
 //static const char ntpServerName[] = "us.pool.ntp.org";
 static const char ntpServerName[] = "time.nist.gov";
