@@ -22,7 +22,7 @@ const int ledPin = 13;
 void setup() {
     //   time_t ntpTime;
     Serial.begin(115200);
-    delay(2000);
+    delay(2000);	
 
     //Configure pins for Adafruit M0 ATWINC1500 Feather
     WiFi.setPins(8, 7, 4, 2);
@@ -83,7 +83,11 @@ void loop() {
 		lastDownloadUpdate = millis();
 		drawUpdate();
     }
-    delay(1000);
+	  // If user touches screen, toggle between weather overview and the detailed forecast text
+	if (ts.touched()) {
+		Serial.println("Touching!");
+	}
+    delay(100);
     yield();
 }
 
@@ -107,21 +111,34 @@ void drawUpdate() {
 	tft.print(weather.getHumidity());
 	tft.print("\045");
 
-	tft.setCursor(30,130);
+	int y = 130;
 	tft.setFont(&smallFont);
 	if (weather.getAlertCount() > 0 ) {
 		Serial.println("Alert count: " + String(weather.getAlertCount()));
-		tft.print("Alert: ");
-		tft.print(weather.getAlertDescription(0));
+		for (int i=0; i < weather.getAlertCount(); i++) {
+			tft.setCursor(20,y);
+			tft.print(weather.getAlertSeverity(0));
+			tft.print(": ");
+			tft.print(weather.getAlertTitle(0));
+			y += 20;
+		}
+		// tft.setCursor(20,y);
+		// tft.print("Alert list done");
 	} else {
 		tft.print("No alerts");
 	}
-	tft.setCursor(220,240);
+	tft.setCursor(20,300);
 	tft.print(weather.getWindSpeed());
-	tft.print(" mph");
-	tft.setCursor(220,300);
+	tft.print(" mph || gusting ");
+	// tft.setCursor(220,300);
 	tft.print(weather.getWindGust());
 	tft.print(" mph");
+
+	tft.setCursor(300, 300);
+	tft.print(weather.getRainIn());
+	tft.print("\"/hr || ");
+	tft.print(weather.getRainDay());
+	tft.print("\" today");
 }
 
 // Map from Dark Sky's icon names to ones we know on SD card

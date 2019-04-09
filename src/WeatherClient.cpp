@@ -152,36 +152,36 @@ void WeatherClient::value(String value) {
 			nearestStormDistance = value.toInt();
 		}
 		if (current() == "summary") {  
-			Serial.println("summary " + value);
+			// Serial.println("summary " + value);
 			summary = value;
 		}
 		if (current() == "icon") { 
-			Serial.println("icon " + value);
+			// Serial.println("icon " + value);
 			currentIcon = value;
 		}
 		if (current() == "precipProbability") { 
-			Serial.println("precipProbability " + value);
+			// Serial.println("precipProbability " + value);
 			precipProbability = value.toInt();
 		}
 		if (current() == "temperature") { 
-			Serial.println("temperature " + value);
+			// Serial.println("temperature " + value);
 			temperature = value.toFloat();
 		}
 		if (current() == "humidity") { 
-			Serial.println("humidity " + value);
+			// Serial.println("humidity " + value);
 			double humid_float = value.toFloat()*100;
 			humidity = (int) humid_float;
 		}
 		if (current() == "windSpeed") { 
-			Serial.println("windSpeed " + value);
+			// Serial.println("windSpeed " + value);
 			windSpeed = value.toInt();
 		}
 		if (current() == "windGust") { 
-			Serial.println("windGust " + value);
+			// Serial.println("windGust " + value);
 			windGust = value.toInt();
 		}
 	} else if (parent() == "alerts") {
-		Serial.println("Got alerts");
+		// Serial.println("Got alerts");
 		if (current() == "description") { 
 			// Serial.println("description " + value);
 			description[alertIndex] = value;
@@ -212,7 +212,7 @@ void WeatherClient::value(String value) {
 	if (current() != "regions") {
 		pop();
 	} else {
-		Serial.println("value: not popping stack since doing regions");
+		// Serial.println("value: not popping stack since doing regions");
 	}
 }
 
@@ -234,32 +234,32 @@ void WeatherClient::endDocument() {
 // startArray lets us know the key has a set of values
 void WeatherClient::startArray() {
 	inArray = true;
-    Serial.print("startArray ");
-	Serial.print("parent " + parent());
-	Serial.println(", current " + current());
+    // Serial.print("startArray ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
 }
 void WeatherClient::endArray() {
 	inArray = false;
-    Serial.print("endArray ");
-	Serial.print("parent " + parent());
-	Serial.println(", current " + current());
+    // Serial.print("endArray ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
 	if (current() == "regions") {
-		Serial.println("endArray: Pop regions off of stack");
+		// Serial.println("endArray: Pop regions off of stack");
 		pop();
 	}
 }
 
 void WeatherClient::startObject() {
-	Serial.print("In startObject ");
-	Serial.print("parent " + parent());
-	Serial.println(", current " + current());
+	// Serial.print("In startObject ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
 }
 void WeatherClient::endObject() {
-    Serial.print("endObject before pop: ");
-	Serial.print("parent " + parent());	Serial.println(", current " + current());
+    // Serial.print("endObject before pop: ");
+	// Serial.print("parent " + parent());	Serial.println(", current " + current());
 	if (current() == "alerts") {
 		alertIndex++;
-		Serial.println("Increase alertIndex, now " + String(alertIndex));
+		// Serial.println("Increase alertIndex, now " + String(alertIndex));
 	} else if (parent() == "daily") {
 		// Serial.println("Increase dailyIndex");
 		dailyIndex++;
