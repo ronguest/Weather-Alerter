@@ -5,8 +5,10 @@
 #include "WeatherClient.h"
 #include <WiFi101.h>
 
+// Stack variables
 String parents[parentSize];
 uint16_t parentIndex = 0;
+
 boolean inArray = false;
 uint16_t dailyIndex;
 uint16_t alertIndex;
@@ -33,8 +35,6 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     // Currently this is handled by a bit of a kludge: checking the parent keyword to see if it also matches the desired feed
     parser.setListener(this);
     WiFiClient client;
-    // Red LED output on the M0 Feather
-    const int ledPin = 23;
 
     Serial.print("Connect to Server: ");
     Serial.println(server);

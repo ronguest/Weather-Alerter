@@ -16,9 +16,6 @@ ImageReturnCode imageStatus; 	// Status from image-reading functions
 void drawUpdate();
 String mapIcon(String s);
 
-// Red LED output on the M0 Feather
-const int ledPin = 13;
-
 void setup() {
     //   time_t ntpTime;
     Serial.begin(115200);
