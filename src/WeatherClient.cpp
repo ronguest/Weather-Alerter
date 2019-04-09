@@ -15,6 +15,10 @@ WeatherClient::WeatherClient(boolean foo) {
 }
 
 void WeatherClient::updateConditions(String apiKey, String location) {
+	// Reset the alertIndex to 0 here since this is the only JSON document containing alerts
+	// Also dailyIndex because that only applies to the Dark Sky reponse as well (not AW)
+	alertIndex = 0;
+	dailyIndex = 0;
     doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
 }
 
@@ -117,6 +121,14 @@ String WeatherClient::getAlertDescription(uint16_t i) {
 	return description[i];
 }
 
+String WeatherClient::getAlertTitle(uint16_t i) {
+	return title[i];
+}
+
+String WeatherClient::getAlertSeverity(uint16_t i) {
+	return severity[i];
+}
+
 String WeatherClient::getRainIn() {
 	return rainIn;
 }
@@ -127,7 +139,7 @@ String WeatherClient::getRainDay() {
 
 // The key basically tells us which set of data from the JSON is coming
 void WeatherClient::key(String key) {
-	Serial.println("Push key " + key);
+	// Serial.println("Push key " + key);
 	push(key);
 }
 
@@ -171,13 +183,15 @@ void WeatherClient::value(String value) {
 	} else if (parent() == "alerts") {
 		Serial.println("Got alerts");
 		if (current() == "description") { 
-			Serial.println("description " + value);
+			// Serial.println("description " + value);
 			description[alertIndex] = value;
-		}
-		if (current() == "severity") { 
+		} else if (current() == "severity") { 
 			Serial.println("severity " + value);
 			severity[alertIndex] = value;
-		}		
+		} else if (current() == "title") {
+			Serial.println("title " + value);
+			title[alertIndex] = value;
+		}
 	} else if (parent() == "data") {
 /* 		if (current() == "temperatureMax") {
 			Serial.print("save tempMax to index " + String(dailyIndex));
@@ -197,6 +211,8 @@ void WeatherClient::value(String value) {
 	}
 	if (current() != "regions") {
 		pop();
+	} else {
+		Serial.println("value: not popping stack since doing regions");
 	}
 }
 
@@ -206,8 +222,6 @@ void WeatherClient::whitespace(char c) {
 
 void WeatherClient::startDocument() {
     // Serial.println(F("start document"));
-	alertIndex = 0;
-	dailyIndex = 0;
 	parentIndex = 0;		// Empty the stack for each document we process
 }
 void WeatherClient::endDocument() {
@@ -230,6 +244,7 @@ void WeatherClient::endArray() {
 	Serial.print("parent " + parent());
 	Serial.println(", current " + current());
 	if (current() == "regions") {
+		Serial.println("endArray: Pop regions off of stack");
 		pop();
 	}
 }
@@ -243,8 +258,8 @@ void WeatherClient::endObject() {
     Serial.print("endObject before pop: ");
 	Serial.print("parent " + parent());	Serial.println(", current " + current());
 	if (current() == "alerts") {
-		Serial.println("Increase alertIndex");
 		alertIndex++;
+		Serial.println("Increase alertIndex, now " + String(alertIndex));
 	} else if (parent() == "daily") {
 		// Serial.println("Increase dailyIndex");
 		dailyIndex++;
@@ -267,7 +282,7 @@ void WeatherClient::push(String s) {
 String WeatherClient::pop() {
 	if (parentIndex > 0) {
 		parentIndex--;
-		Serial.println("Pop " + parents[parentIndex]);
+		// Serial.println("Pop " + parents[parentIndex]);
 		return parents[parentIndex];
 	} else {
 		return "";
