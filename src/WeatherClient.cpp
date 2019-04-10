@@ -35,6 +35,8 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     // Currently this is handled by a bit of a kludge: checking the parent keyword to see if it also matches the desired feed
     parser.setListener(this);
     WiFiClient client;
+	// Red LED output on the M0 Feather
+	const int ledPin = 13;
 
     Serial.print("Connect to Server: ");
     Serial.println(server);
@@ -61,7 +63,7 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     // Wait some seconds to start receiving a response
     int retryCounter = 0;
     while (!client.available()) {
-        delay(1000);
+        delay(500);
         retryCounter++;
         if (retryCounter > 15) {
             Serial.println(F("Retry timed out"));
@@ -87,6 +89,136 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     client.stop();  // We're done, shut down the connection
 
     digitalWrite(ledPin, LOW);  // Turn LED off to show we're done
+}
+
+// The key basically tells us which set of data from the JSON is coming
+void WeatherClient::key(String key) {
+	// Serial.println("Push key " + key);
+	push(key);
+}
+
+// Time to use the parent() to figure out which section of JSON we are in
+// and current() to know which value we got
+void WeatherClient::value(String value) {
+	if (parent() == "currently") {
+		if (current() == "nearestStormDistance") { 
+			// Serial.println("nearestStormDistance " + value);
+			nearestStormDistance = value.toInt();
+		} else if (current() == "summary") {  
+			// Serial.println("summary " + value);
+			summary = value;
+		} else if (current() == "icon") { 
+			// Serial.println("icon " + value);
+			currentIcon = value;
+		} else if (current() == "precipProbability") { 
+			// Serial.println("precipProbability " + value);
+			precipProbability = value.toInt();
+		} else if (current() == "temperature") { 
+			// Serial.println("temperature " + value);
+			temperature = value.toFloat();
+		} else if (current() == "humidity") { 
+			// Serial.println("humidity " + value);
+			double humid_float = value.toFloat()*100;
+			humidity = (int) humid_float;
+		} else if (current() == "windSpeed") { 
+			// Serial.println("windSpeed " + value);
+			windSpeed = value.toInt();
+		} else if (current() == "windGust") { 
+			// Serial.println("windGust " + value);
+			windGust = value.toInt();
+		}
+	} else if (parent() == "alerts") {
+		// Serial.println("Got alerts");
+		if (current() == "description") { 
+			// Serial.println("description " + value);
+			description[alertIndex] = value;
+		} else if (current() == "severity") { 
+			Serial.println("severity " + value);
+			severity[alertIndex] = value;
+		} else if (current() == "title") {
+			Serial.println("title " + value);
+			title[alertIndex] = value;
+		}
+	} else if (parent() == "data") {
+/* 		if (current() == "temperatureMax") {
+			Serial.print("save tempMax to index " + String(dailyIndex));
+			Serial.println(", temperatureMax " + value);
+			temperatureMax[dailyIndex] = value.toFloat();
+		} */
+	} else {
+		// Either an unused/unknown parent or it is the Ambient Weather data which has no parent
+		if (current() == "hourlyrainin") {
+			rainIn = value;
+			Serial.println("rainIn " + rainIn);
+		}
+		if (current() == "dailyrainin") {
+			rainDay = value;
+			Serial.println("rainDay " + rainDay);
+		}
+	}
+	// Values in "regions" for alerts don't have keys so there is nothing to pop in that case
+	if ((parent() == "alerts") && (current() == "regions")) {
+		// Serial.println("value: not popping stack since doing alerts regions");
+	} else {
+		pop();
+	}
+}
+
+void WeatherClient::whitespace(char c) {
+    //Serial.println(F("whitespace"));
+}
+
+void WeatherClient::startDocument() {
+    // Serial.println(F("start document"));
+	parentIndex = 0;		// Empty the stack for each document we process
+}
+void WeatherClient::endDocument() {
+    // Serial.println(F("end document"));
+	// for (int i=0; i<dailyIndex; i++) {
+	// 	Serial.println(temperatureMax[i]);
+	// }
+}
+
+// startArray lets us know the key has a set of values
+void WeatherClient::startArray() {
+	inArray = true;
+    // Serial.print("startArray ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
+}
+void WeatherClient::endArray() {
+	inArray = false;
+    // Serial.print("endArray ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
+	// Special case because "regions" values do not have keys
+	// So when the "regions" array ends pop it off the stack
+	if ((parent() == "alerts") && (current() == "regions")) {
+		// Serial.println("endArray: Pop regions off of stack");
+		pop();
+	}
+}
+
+void WeatherClient::startObject() {
+	// Serial.print("In startObject ");
+	// Serial.print("parent " + parent());
+	// Serial.println(", current " + current());
+}
+void WeatherClient::endObject() {
+    // Serial.print("endObject before pop: ");
+	// Serial.print("parent " + parent());	Serial.println(", current " + current());
+	if (current() == "alerts") {
+		alertIndex++;
+		// Serial.println("Increase alertIndex, now " + String(alertIndex));
+	} else if (parent() == "daily") {
+		// Serial.println("Increase dailyIndex");
+		dailyIndex++;
+	}	
+
+	// Objects in an array don't have a key/name so we can't pop in that case or we lost parentage
+	if (!inArray) {
+		pop();
+	}
 }
 
 String WeatherClient::getSummary() {
@@ -137,140 +269,7 @@ String WeatherClient::getRainDay() {
 	return rainDay;
 }
 
-// The key basically tells us which set of data from the JSON is coming
-void WeatherClient::key(String key) {
-	// Serial.println("Push key " + key);
-	push(key);
-}
-
-// Time to use the parent() to figure out which section of JSON we are in
-// and current() to know which value we got
-void WeatherClient::value(String value) {
-	if (parent() == "currently") {
-		if (current() == "nearestStormDistance") { 
-			// Serial.println("nearestStormDistance " + value);
-			nearestStormDistance = value.toInt();
-		}
-		if (current() == "summary") {  
-			// Serial.println("summary " + value);
-			summary = value;
-		}
-		if (current() == "icon") { 
-			// Serial.println("icon " + value);
-			currentIcon = value;
-		}
-		if (current() == "precipProbability") { 
-			// Serial.println("precipProbability " + value);
-			precipProbability = value.toInt();
-		}
-		if (current() == "temperature") { 
-			// Serial.println("temperature " + value);
-			temperature = value.toFloat();
-		}
-		if (current() == "humidity") { 
-			// Serial.println("humidity " + value);
-			double humid_float = value.toFloat()*100;
-			humidity = (int) humid_float;
-		}
-		if (current() == "windSpeed") { 
-			// Serial.println("windSpeed " + value);
-			windSpeed = value.toInt();
-		}
-		if (current() == "windGust") { 
-			// Serial.println("windGust " + value);
-			windGust = value.toInt();
-		}
-	} else if (parent() == "alerts") {
-		// Serial.println("Got alerts");
-		if (current() == "description") { 
-			// Serial.println("description " + value);
-			description[alertIndex] = value;
-		} else if (current() == "severity") { 
-			Serial.println("severity " + value);
-			severity[alertIndex] = value;
-		} else if (current() == "title") {
-			Serial.println("title " + value);
-			title[alertIndex] = value;
-		}
-	} else if (parent() == "data") {
-/* 		if (current() == "temperatureMax") {
-			Serial.print("save tempMax to index " + String(dailyIndex));
-			Serial.println(", temperatureMax " + value);
-			temperatureMax[dailyIndex] = value.toFloat();
-		} */
-	} else {
-		//Serial.println("unused parent " + parent());
-		if (current() == "hourlyrainin") {
-			rainIn = value;
-			Serial.println("rainIn " + rainIn);
-		}
-		if (current() == "dailyrainin") {
-			rainDay = value;
-			Serial.println("rainDay " + rainDay);
-		}
-	}
-	if (current() != "regions") {
-		pop();
-	} else {
-		// Serial.println("value: not popping stack since doing regions");
-	}
-}
-
-void WeatherClient::whitespace(char c) {
-    //Serial.println(F("whitespace"));
-}
-
-void WeatherClient::startDocument() {
-    // Serial.println(F("start document"));
-	parentIndex = 0;		// Empty the stack for each document we process
-}
-void WeatherClient::endDocument() {
-    // Serial.println(F("end document"));
-	// for (int i=0; i<dailyIndex; i++) {
-	// 	Serial.println(temperatureMax[i]);
-	// }
-}
-
-// startArray lets us know the key has a set of values
-void WeatherClient::startArray() {
-	inArray = true;
-    // Serial.print("startArray ");
-	// Serial.print("parent " + parent());
-	// Serial.println(", current " + current());
-}
-void WeatherClient::endArray() {
-	inArray = false;
-    // Serial.print("endArray ");
-	// Serial.print("parent " + parent());
-	// Serial.println(", current " + current());
-	if (current() == "regions") {
-		// Serial.println("endArray: Pop regions off of stack");
-		pop();
-	}
-}
-
-void WeatherClient::startObject() {
-	// Serial.print("In startObject ");
-	// Serial.print("parent " + parent());
-	// Serial.println(", current " + current());
-}
-void WeatherClient::endObject() {
-    // Serial.print("endObject before pop: ");
-	// Serial.print("parent " + parent());	Serial.println(", current " + current());
-	if (current() == "alerts") {
-		alertIndex++;
-		// Serial.println("Increase alertIndex, now " + String(alertIndex));
-	} else if (parent() == "daily") {
-		// Serial.println("Increase dailyIndex");
-		dailyIndex++;
-	}	
-
-	// Objects in an array don't have a key/name so we can't pop in that case or we lost parentage
-	if (!inArray) {
-		pop();
-	}
-}
-
+// Stack implementation for keys
 void WeatherClient::push(String s) {
 	if (parentIndex < parentSize - 2) {
 		parents[parentIndex++] = s;
