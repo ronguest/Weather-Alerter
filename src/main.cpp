@@ -13,6 +13,7 @@ WeatherClient weather(1);
 Adafruit_ImageReader reader;     // Class w/image-reading functions
 ImageReturnCode imageStatus; 	// Status from image-reading functions
 DisplayMode displayMode;
+boolean updateSuccess;
 
 int freeMemory();
 
@@ -76,10 +77,13 @@ void setup() {
 }
 
 void loop() {
+	boolean success1, success2;
     // Check if we should update weather information
     if ((millis() - lastDownloadUpdate) > (1000 * UPDATE_INTERVAL_SECS)) {
-		weather.updateConditions(DS_KEY, DS_location);
-		weather.updateLocal(AW_DEVICE, AW_APP_KEY, AW_API_KEY);
+		tft.fillCircle(450, 10, 5, HX8357_BLUE);
+		success1 = weather.updateConditions(DS_KEY, DS_location);
+		success2 = weather.updateLocal(AW_DEVICE, AW_APP_KEY, AW_API_KEY);
+		updateSuccess = success1 & success2;
 		lastDownloadUpdate = millis();
 		if (displayMode == standard) {
 			drawUpdate();
@@ -104,6 +108,11 @@ void loop() {
 
 void drawAlert() {
 	tft.fillScreen(WX_BLACK);
+	if (updateSuccess) {
+		tft.fillCircle(450, 10, 5, HX8357_GREEN);
+	} else {
+		tft.fillCircle(450, 10, 5, HX8357_RED);
+	}	
 	tft.setFont(&smallFont);
 	// tft.setTextSize(2);
 	tft.setCursor(20,50);
@@ -113,6 +122,11 @@ void drawAlert() {
 // Display is 480x320
 void drawUpdate() {
 	tft.fillScreen(WX_BLACK);
+	if (updateSuccess) {
+		tft.fillCircle(450, 10, 5, HX8357_GREEN);
+	} else {
+		tft.fillCircle(450, 10, 5, HX8357_RED);
+	}	
 	tft.setFont(&largeFont);
 	// tft.setTextSize(2);
 	tft.setCursor(50,75);

@@ -15,7 +15,7 @@ const uint16_t parentSize = 10;
 
 class WeatherClient : public JsonListener {
    private:
-    void doUpdate(int port, char server[], String url);
+    boolean doUpdate(int port, char server[], String url);
 	String currentKey;
     // "currently" condition values
     String currentIcon;
@@ -45,8 +45,8 @@ class WeatherClient : public JsonListener {
 
    public:
     WeatherClient(boolean foo);
-    void updateConditions(String appKey, String location);
-    void updateLocal(String device, String appKey, String apiKey);
+    boolean updateConditions(String appKey, String location);
+    boolean updateLocal(String device, String appKey, String apiKey);
     uint16_t getNearestStormDistance();
     uint16_t getPrecipProbability();
     String getSummary();

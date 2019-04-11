@@ -16,19 +16,19 @@ uint16_t alertIndex;
 WeatherClient::WeatherClient(boolean foo) {
 }
 
-void WeatherClient::updateConditions(String apiKey, String location) {
+boolean WeatherClient::updateConditions(String apiKey, String location) {
 	// Reset the alertIndex to 0 here since this is the only JSON document containing alerts
 	// Also dailyIndex because that only applies to the Dark Sky reponse as well (not AW)
 	alertIndex = 0;
 	dailyIndex = 0;
-    doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
+    return doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
 }
 
-void WeatherClient::updateLocal(String device, String appKey, String apiKey) {
-  doUpdate(443, "api.ambientweather.net", "/v1/devices/" + device + "?applicationKey=" + appKey + "&apiKey=" + apiKey + "&limit=1");
+boolean WeatherClient::updateLocal(String device, String appKey, String apiKey) {
+  return doUpdate(443, "api.ambientweather.net", "/v1/devices/" + device + "?applicationKey=" + appKey + "&apiKey=" + apiKey + "&limit=1");
 }
 
-void WeatherClient::doUpdate(int port, char server[], String url) {
+boolean WeatherClient::doUpdate(int port, char server[], String url) {
     JsonStreamingParser parser;
     // It might be better to have separate objects for each weather data source
     // As it is now the same code is processing keywords from diverse sources leading to potential conflictss
@@ -46,12 +46,12 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     if (port == 443) {
         if (!client.connectSSL(server, port)) {
             Serial.println("SSL connection failed");
-            return;
+            return false;
         }
     } else {
         if (!client.connect(server, port)) {
             Serial.println("connection failed");
-            return;
+            return false;
         }
     }
 
@@ -67,7 +67,7 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
         retryCounter++;
         if (retryCounter > 15) {
             Serial.println(F("Retry timed out"));
-            return;
+            return false;
         }
     }
 
@@ -89,6 +89,7 @@ void WeatherClient::doUpdate(int port, char server[], String url) {
     client.stop();  // We're done, shut down the connection
 
     digitalWrite(ledPin, LOW);  // Turn LED off to show we're done
+	return true;
 }
 
 // The key basically tells us which set of data from the JSON is coming
