@@ -18,8 +18,9 @@ boolean updateSuccess;
 int freeMemory();
 
 void drawUpdate();
-void drawAlert();
+void drawAlert(int index);
 String mapIcon(String s);
+int pageNumber = 0;
 
 void setup() {
     //   time_t ntpTime;
@@ -88,16 +89,23 @@ void loop() {
 		if (displayMode == standard) {
 			drawUpdate();
 		} else {
-			drawAlert();
+			drawAlert(0);
 		}
     }
 	  // If user touches screen, toggle between weather overview and the detailed forecast text
 	if (ts.touched()) {
 		Serial.println("Touched");
 		if (displayMode == standard) {
+			// On first touch switch to alert mode and display first alert
+			pageNumber = 0;
 			displayMode = alert;
-			drawAlert();
+			drawAlert(pageNumber);
+		} else if ((displayMode == alert) && (pageNumber < weather.getAlertCount()-1) ){
+			// Go to next alert in list
+			pageNumber++;
+			drawAlert(pageNumber);
 		} else {
+			// Switch back to the front page if done showing alerts
 			displayMode = standard;
 			drawUpdate();
 		}
@@ -106,7 +114,7 @@ void loop() {
     delay(100);
 }
 
-void drawAlert() {
+void drawAlert(int index) {
 	tft.fillScreen(WX_BLACK);
 	if (updateSuccess) {
 		tft.fillCircle(450, 10, 5, HX8357_GREEN);
@@ -114,9 +122,39 @@ void drawAlert() {
 		tft.fillCircle(450, 10, 5, HX8357_RED);
 	}	
 	tft.setFont(&smallFont);
-	// tft.setTextSize(2);
-	tft.setCursor(20,50);
-	tft.print(weather.getAlertDescription(0));
+	// tft.setCursor(20,50);
+	// tft.print(weather.getAlertDescription(0));
+
+	int y = 20;
+	int textLength;
+	int finalSpace;
+	int maxLines = 12;
+	int maxPerLine = 50;
+	int lineSize = 20;
+	int startPoint = 0;   // Position in text of next character to print
+
+	tft.setTextColor(WX_CYAN, WX_BLACK);
+	textLength = weather.getAlertDescription(index).length();
+
+	while ((startPoint < textLength) && (maxLines > 0)) {
+	// Find the last space in the next string we will print
+	finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine);
+	if (finalSpace == -1 ) {
+		// It's possible the final substring doesn't have a space
+		finalSpace = textLength;
+	}
+	//Serial.print("Final space: ");Serial.println(finalSpace);
+	// If the first character is a space, skip it (happens due to line wrapping)
+	if (weather.getAlertDescription(index).indexOf(' ', startPoint) == startPoint) {
+		startPoint++;
+	}
+	tft.setCursor(10,y);
+	tft.print(weather.getAlertDescription(index).substring(startPoint, finalSpace));
+	y += lineSize;
+	startPoint = finalSpace;
+	//Serial.print("Start point: ");Serial.println(startPoint);
+	maxLines--;
+	}	
 }
 
 // Display is 480x320

@@ -32,7 +32,15 @@ boolean WeatherClient::updateConditions(String apiKey, String location) {
 	alertIndex = 0;
 	dailyIndex = 0;
     result = doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
-	// Fake alert data for testing
+	// Fake alert for text display testing
+	alertIndex = 2;
+	alerts[0].severity = 3;
+	alerts[0].title = "Severity title";
+	alerts[0].description = "This is a very long line of text which should get broken up into two lines if I am very very luck";
+	alerts[1].severity = 2;
+	alerts[1].title = "Severity title2";
+	alerts[1].description = "This is ANOTHER very long line of text which should get broken up into two lines if I am very very luck";
+	// Fake alert data for sort testing
 	/* alertIndex = 3;
 	for (int i=0; i<alertIndex; i++) {
 		alerts[i].severity = i+1;
