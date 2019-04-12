@@ -15,12 +15,10 @@ ImageReturnCode imageStatus; 	// Status from image-reading functions
 DisplayMode displayMode;
 boolean updateSuccess;
 
-int freeMemory();
-
 void drawUpdate();
 void drawAlert(int index);
 String mapIcon(String s);
-int pageNumber = 0;
+int pageNumber = 0;			// Which alert text to display
 
 void setup() {
     //   time_t ntpTime;
@@ -92,7 +90,7 @@ void loop() {
 			drawAlert(0);
 		}
     }
-	  // If user touches screen, toggle between weather overview and the detailed forecast text
+	  // If user touches screen, toggle between weather overview and each alert
 	if (ts.touched()) {
 		Serial.println("Touched");
 		if (displayMode == standard) {
@@ -114,17 +112,16 @@ void loop() {
     delay(100);
 }
 
+// Draw a page of alert details
 void drawAlert(int index) {
 	tft.fillScreen(WX_BLACK);
+	tft.setFont(&smallFont);
+	tft.setTextColor(WX_CYAN, WX_BLACK);
 	if (updateSuccess) {
 		tft.fillCircle(450, 10, 5, HX8357_GREEN);
 	} else {
 		tft.fillCircle(450, 10, 5, HX8357_RED);
 	}	
-	tft.setFont(&smallFont);
-	// tft.setCursor(20,50);
-	// tft.print(weather.getAlertDescription(0));
-
 	int y = 20;
 	int textLength;
 	int finalSpace;
@@ -133,9 +130,7 @@ void drawAlert(int index) {
 	int lineSize = 20;
 	int startPoint = 0;   // Position in text of next character to print
 
-	tft.setTextColor(WX_CYAN, WX_BLACK);
 	textLength = weather.getAlertDescription(index).length();
-
 	while ((startPoint < textLength) && (maxLines > 0)) {
 	// Find the last space in the next string we will print
 	finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine);
@@ -158,6 +153,7 @@ void drawAlert(int index) {
 }
 
 // Display is 480x320
+// Draws the "front page"
 void drawUpdate() {
 	tft.fillScreen(WX_BLACK);
 	if (updateSuccess) {
@@ -250,22 +246,4 @@ String mapIcon(String s) {
 		return "pcloudy";
 	}
 	return "unknown";
-}
-
-#ifdef __arm__
-// should use uinstd.h to define sbrk but Due causes a conflict
-extern "C" char* sbrk(int incr);
-#else  // __ARM__
-extern char *__brkval;
-#endif  // __arm__
-
-int freeMemory() {
-  char top;
-#ifdef __arm__
-  return &top - reinterpret_cast<char*>(sbrk(0));
-#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
-  return &top - __brkval;
-#else  // __arm__
-  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
-#endif  // __arm__
 }

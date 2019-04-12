@@ -192,11 +192,11 @@ void WeatherClient::value(String value) {
 		// Either an unused/unknown parent or it is the Ambient Weather data which has no parent
 		if (current() == "hourlyrainin") {
 			rainIn = value;
-			Serial.println("rainIn " + rainIn);
+			// Serial.println("rainIn " + rainIn);
 		}
 		if (current() == "dailyrainin") {
 			rainDay = value;
-			Serial.println("rainDay " + rainDay);
+			// Serial.println("rainDay " + rainDay);
 		}
 	}
 	// Values in "regions" for alerts don't have keys so there is nothing to pop in that case
