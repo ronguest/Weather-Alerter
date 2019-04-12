@@ -145,29 +145,31 @@ void drawUpdate() {
 	tft.print("\045");
 
 	int y = 115;
-	tft.setFont(&smallFont);
+	tft.setFont(&largeFont);
 	if (weather.getAlertCount() > 0 ) {
 		Serial.println("Alert count: " + String(weather.getAlertCount()));
 		for (int i=0; i < weather.getAlertCount(); i++) {
 			tft.setCursor(20,y);
 			// tft.print(weather.getAlertSeverity(0));
 			// tft.print(": ");
-			if (weather.getAlertSeverity(0) == "warning") {
+			if (weather.getAlertSeverity(i) == 3) {
 				tft.setTextColor(WX_RED);
-			} else if (weather.getAlertSeverity(0) == "watch") {
+			} else if (weather.getAlertSeverity(i) == 2) {
 				tft.setTextColor(WX_YELLOW);
 			} else {
 				tft.setTextColor(WX_WHITE);
 			}
-			tft.print(weather.getAlertTitle(0));
-			y += 20;
+			tft.print(weather.getAlertTitle(i));
+			y += 35;
 		}
 		// tft.setCursor(20,y);
 		// tft.print("Alert list done");
 	} else {
 		tft.setCursor(20, y);
-		tft.print("No alerts");
+		//tft.print("No alerts");
+		tft.print(weather.getSummary());
 	}
+	tft.setFont(&smallFont);
 	tft.setTextColor(WX_CYAN);
 	tft.setCursor(20,300);
 	tft.print(weather.getWindSpeed());

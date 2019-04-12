@@ -13,15 +13,42 @@ boolean inArray = false;
 uint16_t dailyIndex;
 uint16_t alertIndex;
 
+int cmpfunc(const void * a, const void * b) {
+	Alert *alertA = (Alert *)a;
+	Alert *alertB = (Alert *)b;
+	Serial.print("alertA.severity "); Serial.println(alertA->severity);
+	Serial.print("alertB.severity "); Serial.println(alertB->severity);
+	Serial.print("b > a? "); Serial.println(alertB->severity - alertA->severity);
+	return (alertB->severity - alertA->severity);
+}
+
 WeatherClient::WeatherClient(boolean foo) {
 }
 
 boolean WeatherClient::updateConditions(String apiKey, String location) {
+	boolean result;
 	// Reset the alertIndex to 0 here since this is the only JSON document containing alerts
 	// Also dailyIndex because that only applies to the Dark Sky reponse as well (not AW)
 	alertIndex = 0;
 	dailyIndex = 0;
-    return doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
+    result = doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
+	// Fake alert data for testing
+	/* alertIndex = 3;
+	for (int i=0; i<alertIndex; i++) {
+		alerts[i].severity = i+1;
+		alerts[i].title = String(i+1);
+		alerts[i].description = String(i+1);
+	}
+	Serial.println("Before sort");
+	for (int i=0; i<alertIndex; i++) {
+		Serial.print(i); Serial.print(": "); Serial.println(alerts[i].severity);
+	}	 */
+	qsort(alerts, alertIndex, sizeof(Alert), cmpfunc);
+/* 	Serial.println("After soft");
+	for (int i=0; i<alertIndex; i++) {
+		Serial.print(i); Serial.print(": "); Serial.println(alerts[i].severity);
+	} */
+	return result;
 }
 
 boolean WeatherClient::updateLocal(String device, String appKey, String apiKey) {
@@ -132,13 +159,20 @@ void WeatherClient::value(String value) {
 		// Serial.println("Got alerts");
 		if (current() == "description") { 
 			// Serial.println("description " + value);
-			description[alertIndex] = value;
+			alerts[alertIndex].description = value;
 		} else if (current() == "severity") { 
 			Serial.println("severity " + value);
-			severity[alertIndex] = value;
+			// Convert severity to int for sorting
+			int sev = 1;	// default 1 = advisory/other
+			if (value == "warning") {
+				sev = 3;
+			} else if (value == "watch") {
+				sev = 2;
+			}
+			alerts[alertIndex].severity = sev;
 		} else if (current() == "title") {
 			Serial.println("title " + value);
-			title[alertIndex] = value;
+			alerts[alertIndex].title = value;
 		}
 	} else if (parent() == "data") {
 /* 		if (current() == "temperatureMax") {
@@ -209,11 +243,15 @@ void WeatherClient::endObject() {
     // Serial.print("endObject before pop: ");
 	// Serial.print("parent " + parent());	Serial.println(", current " + current());
 	if (current() == "alerts") {
-		alertIndex++;
+		if (alertIndex < maxAlerts) {
+			alertIndex++;
+		}
 		// Serial.println("Increase alertIndex, now " + String(alertIndex));
 	} else if (parent() == "daily") {
 		// Serial.println("Increase dailyIndex");
-		dailyIndex++;
+		if (dailyIndex < maxDaily) {
+			dailyIndex++;
+		}
 	}	
 
 	// Objects in an array don't have a key/name so we can't pop in that case or we lost parentage
@@ -251,15 +289,15 @@ uint16_t WeatherClient::getAlertCount() {
 }
 
 String WeatherClient::getAlertDescription(uint16_t i) {
-	return description[i];
+	return alerts[i].description;
 }
 
 String WeatherClient::getAlertTitle(uint16_t i) {
-	return title[i];
+	return alerts[i].title;
 }
 
-String WeatherClient::getAlertSeverity(uint16_t i) {
-	return severity[i];
+uint16_t WeatherClient::getAlertSeverity(uint16_t i) {
+	return alerts[i].severity;
 }
 
 String WeatherClient::getRainIn() {

@@ -12,6 +12,11 @@
 const int maxAlerts = 32;
 const uint16_t maxDaily = 32;
 const uint16_t parentSize = 10;
+struct Alert { 
+	uint16_t severity;	// 3 = warning, 2 = watch, 3 = advisory/other
+	String title;
+	String description;
+};
 
 class WeatherClient : public JsonListener {
    private:
@@ -31,10 +36,7 @@ class WeatherClient : public JsonListener {
 
     // "alerts" values
 	uint16_t alertIndex;
-    String description[maxAlerts];
-    uint16_t expires[maxAlerts];
-    String severity[maxAlerts];
-    String title[maxAlerts];
+    Alert alerts[maxAlerts];
 	// "daily" values
 	// double temperatureMax[maxDaily];
 	// Stack functions to keep track of keyword hierarchy/context
@@ -57,7 +59,7 @@ class WeatherClient : public JsonListener {
 	// uint16_t getMostSevereAlert();
 	String getAlertDescription(uint16_t ind);
 	String getAlertTitle(uint16_t ind);
-	String getAlertSeverity(uint16_t ind);
+	uint16_t getAlertSeverity(uint16_t ind);
 	double getTemperature();
 	String getCurrentIcon();
 	String getRainIn();
