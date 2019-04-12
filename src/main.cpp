@@ -93,7 +93,7 @@ void loop() {
 	  // If user touches screen, toggle between weather overview and each alert
 	if (ts.touched()) {
 		Serial.println("Touched");
-		if (displayMode == standard) {
+		if ((displayMode == standard) && (weather.getAlertCount() > 0) ){
 			// On first touch switch to alert mode and display first alert
 			pageNumber = 0;
 			displayMode = alert;
@@ -182,7 +182,7 @@ void drawUpdate() {
 	tft.setFont(&largeFont);
 	if (weather.getAlertCount() > 0 ) {
 		Serial.println("Alert count: " + String(weather.getAlertCount()));
-		for (int i=0; i < max(weather.getAlertCount(), 5); i++) {
+		for (int i=0; i < max(weather.getAlertCount(), 4); i++) {
 			tft.setCursor(20,y);
 			// tft.print(weather.getAlertSeverity(0));
 			// tft.print(": ");
@@ -205,6 +205,10 @@ void drawUpdate() {
 	}
 	tft.setFont(&smallFont);
 	tft.setTextColor(WX_CYAN);
+	if (weather.getNearestStormDistance() < 75) {
+		tft.setCursor(20, 275);
+		tft.print("Nearest storm: "); tft.print(weather.getNearestStormDistance()); tft.print(" miles");
+	}
 	tft.setCursor(20,300);
 	tft.print(weather.getWindSpeed());
 	tft.print(" mph || gusting ");

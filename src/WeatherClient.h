@@ -24,8 +24,8 @@ class WeatherClient : public JsonListener {
 	String currentKey;
     // "currently" condition values
     String currentIcon;
-    uint16_t nearestStormDistance;
     uint16_t precipProbability;
+    uint16_t nearestStormDistance;
     String summary;
     double temperature;
     uint16_t windSpeed;

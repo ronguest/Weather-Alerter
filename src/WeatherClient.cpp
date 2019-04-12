@@ -308,6 +308,10 @@ uint16_t WeatherClient::getAlertSeverity(uint16_t i) {
 	return alerts[i].severity;
 }
 
+uint16_t WeatherClient::getNearestStormDistance() {
+	return nearestStormDistance;
+}
+
 String WeatherClient::getRainIn() {
 	return rainIn;
 }
