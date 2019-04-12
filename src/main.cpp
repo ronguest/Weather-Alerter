@@ -79,7 +79,7 @@ void loop() {
 	boolean success1, success2;
     // Check if we should update weather information
     if ((millis() - lastDownloadUpdate) > (1000 * UPDATE_INTERVAL_SECS)) {
-		tft.fillCircle(450, 10, 5, HX8357_BLUE);
+		tft.fillCircle(470, 10, 5, HX8357_BLUE);
 		success1 = weather.updateConditions(DS_KEY, DS_location);
 		success2 = weather.updateLocal(AW_DEVICE, AW_APP_KEY, AW_API_KEY);
 		updateSuccess = success1 & success2;
@@ -118,9 +118,9 @@ void drawAlert(int index) {
 	tft.setFont(&smallFont);
 	tft.setTextColor(WX_CYAN, WX_BLACK);
 	if (updateSuccess) {
-		tft.fillCircle(450, 10, 5, HX8357_GREEN);
+		tft.fillCircle(470, 10, 5, HX8357_GREEN);
 	} else {
-		tft.fillCircle(450, 10, 5, HX8357_RED);
+		tft.fillCircle(470, 10, 5, HX8357_RED);
 	}	
 	int y = 20;
 	int textLength;
@@ -157,9 +157,9 @@ void drawAlert(int index) {
 void drawUpdate() {
 	tft.fillScreen(WX_BLACK);
 	if (updateSuccess) {
-		tft.fillCircle(450, 10, 5, HX8357_GREEN);
+		tft.fillCircle(470, 10, 5, HX8357_GREEN);
 	} else {
-		tft.fillCircle(450, 10, 5, HX8357_RED);
+		tft.fillCircle(470, 10, 5, HX8357_RED);
 	}	
 	tft.setFont(&largeFont);
 	// tft.setTextSize(2);

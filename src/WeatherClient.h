@@ -27,7 +27,7 @@ class WeatherClient : public JsonListener {
     uint16_t precipProbability;
     uint16_t nearestStormDistance;
     String summary;
-    double temperature;
+    uint16_t temperature;
     uint16_t windSpeed;
     uint16_t windGust;
 	uint16_t humidity;
@@ -60,7 +60,7 @@ class WeatherClient : public JsonListener {
 	String getAlertDescription(uint16_t ind);
 	String getAlertTitle(uint16_t ind);
 	uint16_t getAlertSeverity(uint16_t ind);
-	double getTemperature();
+	uint16_t getTemperature();
 	String getCurrentIcon();
 	String getRainIn();
 	String getRainDay();

@@ -149,20 +149,7 @@ void WeatherClient::value(String value) {
 		} else if (current() == "precipProbability") { 
 			// Serial.println("precipProbability " + value);
 			precipProbability = value.toInt();
-		} else if (current() == "temperature") { 
-			// Serial.println("temperature " + value);
-			temperature = round(value.toFloat());
-		} else if (current() == "humidity") { 
-			// Serial.println("humidity " + value);
-			double humid_float = round(value.toFloat()*100);
-			humidity = (int) humid_float;
-		} else if (current() == "windSpeed") { 
-			// Serial.println("windSpeed " + value);
-			windSpeed = value.toInt();
-		} else if (current() == "windGust") { 
-			// Serial.println("windGust " + value);
-			windGust = value.toInt();
-		}
+		} 
 	} else if (parent() == "alerts") {
 		// Serial.println("Got alerts");
 		if (current() == "description") { 
@@ -193,10 +180,19 @@ void WeatherClient::value(String value) {
 		if (current() == "hourlyrainin") {
 			rainIn = value;
 			// Serial.println("rainIn " + rainIn);
-		}
-		if (current() == "dailyrainin") {
+		} else if (current() == "dailyrainin") {
 			rainDay = value;
 			// Serial.println("rainDay " + rainDay);
+		} else if (current() == "windspeedmph") {
+			windSpeed = (int) round(value.toFloat());
+		} else if (current() == "windgustmph") {
+			windGust = (int) round(value.toFloat());
+		} else if (current() == "tempf") { 
+			// Serial.println("temperature " + value);
+			temperature = (int) round(value.toFloat());
+		} else if (current() == "humidity") { 
+			// Serial.println("humidity " + value);
+			humidity = value.toInt();
 		}
 	}
 	// Values in "regions" for alerts don't have keys so there is nothing to pop in that case
@@ -276,7 +272,7 @@ String WeatherClient::getCurrentIcon() {
 	return currentIcon;
 }
 
-double WeatherClient::getTemperature() {
+uint16_t WeatherClient::getTemperature() {
 	return temperature;
 }
 
