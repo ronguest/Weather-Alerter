@@ -186,7 +186,7 @@ void drawUpdate() {
 	tft.setFont(&largeFont);
 	if (weather.getAlertCount() > 0 ) {
 		Serial.println("Alert count: " + String(weather.getAlertCount()));
-		for (int i=0; i < weather.getAlertCount(); i++) {
+		for (int i=0; i < max(weather.getAlertCount(), 5); i++) {
 			tft.setCursor(20,y);
 			// tft.print(weather.getAlertSeverity(0));
 			// tft.print(": ");

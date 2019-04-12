@@ -33,13 +33,13 @@ boolean WeatherClient::updateConditions(String apiKey, String location) {
 	dailyIndex = 0;
     result = doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
 	// Fake alert for text display testing
-	alertIndex = 2;
+/* 	alertIndex = 2;
 	alerts[0].severity = 3;
 	alerts[0].title = "Severity title";
 	alerts[0].description = "This is a very long line of text which should get broken up into two lines if I am very very luck";
 	alerts[1].severity = 2;
 	alerts[1].title = "Severity title2";
-	alerts[1].description = "This is ANOTHER very long line of text which should get broken up into two lines if I am very very luck";
+	alerts[1].description = "This is ANOTHER very long line of text which should get broken up into two lines if I am very very luck"; */
 	// Fake alert data for sort testing
 	/* alertIndex = 3;
 	for (int i=0; i<alertIndex; i++) {
@@ -151,10 +151,10 @@ void WeatherClient::value(String value) {
 			precipProbability = value.toInt();
 		} else if (current() == "temperature") { 
 			// Serial.println("temperature " + value);
-			temperature = value.toFloat();
+			temperature = round(value.toFloat());
 		} else if (current() == "humidity") { 
 			// Serial.println("humidity " + value);
-			double humid_float = value.toFloat()*100;
+			double humid_float = round(value.toFloat()*100);
 			humidity = (int) humid_float;
 		} else if (current() == "windSpeed") { 
 			// Serial.println("windSpeed " + value);
