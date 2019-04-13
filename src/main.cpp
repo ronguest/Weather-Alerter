@@ -128,7 +128,7 @@ void drawAlert(int index) {
 	int y = 20;
 	int textLength;
 	int finalSpace;
-	int maxLines = 25;
+	int maxLines = 20;
 	int maxPerLine = 50;
 	int lineSize = 20;
 	int startPoint = 0;   // Position in text of next character to print
@@ -136,9 +136,7 @@ void drawAlert(int index) {
 	tft.setCursor(10,y);
 	tft.print(weather.getAlertTitle(index));
 	y += lineSize + 10; 	// Add a little extra space after title
-	Serial.println(weather.getAlertDescription(index));
 	textLength = weather.getAlertDescription(index).length();
-	Serial.println("textLength: " + String(textLength));
 	while ((startPoint < textLength) && (maxLines > 0)) {
 		// Take initial cut at finding the last space in the next string we will print
 		finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine);
@@ -164,7 +162,7 @@ void drawAlert(int index) {
 			finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine - (mult*5));
 			tft.getTextBounds(weather.getAlertDescription(index).substring(startPoint, finalSpace), 10, y, &x1, &y1, &w, &h);			
 		}
-		Serial.print("Final space: ");Serial.println(finalSpace);
+		// Serial.print("Final space: ");Serial.println(finalSpace);
 		// If the first character is a space, skip it (happens due to line wrapping)
 		if (weather.getAlertDescription(index).indexOf(' ', startPoint) == startPoint) {
 			startPoint++;
