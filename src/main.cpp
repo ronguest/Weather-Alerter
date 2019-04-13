@@ -73,6 +73,9 @@ void setup() {
     } else {
         Serial.println("SD OK!");
     }
+
+	Serial.print("Display height: "); Serial.println(tft.height());
+	Serial.print("Display width: "); Serial.println(tft.width());
 }
 
 void loop() {
@@ -125,30 +128,53 @@ void drawAlert(int index) {
 	int y = 20;
 	int textLength;
 	int finalSpace;
-	int maxLines = 12;
+	int maxLines = 25;
 	int maxPerLine = 50;
 	int lineSize = 20;
 	int startPoint = 0;   // Position in text of next character to print
 
-	textLength = weather.getAlertDescription(index).length();
-	while ((startPoint < textLength) && (maxLines > 0)) {
-	// Find the last space in the next string we will print
-	finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine);
-	if (finalSpace == -1 ) {
-		// It's possible the final substring doesn't have a space
-		finalSpace = textLength;
-	}
-	//Serial.print("Final space: ");Serial.println(finalSpace);
-	// If the first character is a space, skip it (happens due to line wrapping)
-	if (weather.getAlertDescription(index).indexOf(' ', startPoint) == startPoint) {
-		startPoint++;
-	}
 	tft.setCursor(10,y);
-	tft.print(weather.getAlertDescription(index).substring(startPoint, finalSpace));
-	y += lineSize;
-	startPoint = finalSpace;
-	//Serial.print("Start point: ");Serial.println(startPoint);
-	maxLines--;
+	tft.print(weather.getAlertTitle(index));
+	y += lineSize + 10; 	// Add a little extra space after title
+	Serial.println(weather.getAlertDescription(index));
+	textLength = weather.getAlertDescription(index).length();
+	Serial.println("textLength: " + String(textLength));
+	while ((startPoint < textLength) && (maxLines > 0)) {
+		// Take initial cut at finding the last space in the next string we will print
+		finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine);
+		// Now we need to jump through some hoops because we are not using a monospaced font
+		// The NWS uses ALL CAPS in some text and lines full of all caps take up a lot more width
+		// So the simple method above fails in that case
+		// Should probably replace all of this code with something based on width for the actual font/chars, but this is simpler
+		int16_t x1, y1;
+		uint16_t w, h;
+		// 430 seems the practical max, out of 480
+		tft.getTextBounds(weather.getAlertDescription(index).substring(startPoint, finalSpace), 10, y, &x1, &y1, &w, &h);
+		// Serial.println(weather.getAlertDescription(index).substring(startPoint, startPoint+10));
+		// Serial.println("w: " + String(w));
+		if (finalSpace == -1 ) {
+			// It's possible the final substring doesn't have a space
+			finalSpace = textLength;
+		}
+		int mult = 0;
+		while (w > 430) {
+			// The initial cut will be too wide
+			// Shorten line until it fits by backing up the count of max characters per line
+			mult++;
+			finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine - (mult*5));
+			tft.getTextBounds(weather.getAlertDescription(index).substring(startPoint, finalSpace), 10, y, &x1, &y1, &w, &h);			
+		}
+		Serial.print("Final space: ");Serial.println(finalSpace);
+		// If the first character is a space, skip it (happens due to line wrapping)
+		if (weather.getAlertDescription(index).indexOf(' ', startPoint) == startPoint) {
+			startPoint++;
+		}
+		tft.setCursor(10,y);
+		tft.print(weather.getAlertDescription(index).substring(startPoint, finalSpace));
+		y += lineSize;
+		startPoint = finalSpace;
+		//Serial.print("Start point: ");Serial.println(startPoint);
+		maxLines--;
 	}	
 }
 
@@ -178,7 +204,7 @@ void drawUpdate() {
 	tft.print(weather.getHumidity());
 	tft.print("\045");
 
-	int y = 115;
+	int y = 125;
 	tft.setFont(&largeFont);
 	if (weather.getAlertCount() > 0 ) {
 		Serial.println("Alert count: " + String(weather.getAlertCount()));
@@ -199,6 +225,7 @@ void drawUpdate() {
 		// tft.setCursor(20,y);
 		// tft.print("Alert list done");
 	} else {
+		y += 10;
 		tft.setCursor(20, y);
 		//tft.print("No alerts");
 		tft.print(weather.getSummary());
@@ -216,7 +243,7 @@ void drawUpdate() {
 	tft.print(weather.getWindGust());
 	tft.print(" mph");
 
-	tft.setCursor(300, 300);
+	tft.setCursor(280, 300);
 	tft.print(weather.getRainIn());
 	tft.print("\"/hr || ");
 	tft.print(weather.getRainDay());
