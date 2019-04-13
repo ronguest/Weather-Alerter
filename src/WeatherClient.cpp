@@ -29,6 +29,7 @@ boolean WeatherClient::updateConditions(String apiKey, String location) {
 	boolean result;
 	// Reset the alertIndex to 0 here since this is the only JSON document containing alerts
 	// Also dailyIndex because that only applies to the Dark Sky reponse as well (not AW)
+	Serial.println("alertIndex set to 0 to start update");
 	alertIndex = 0;
 	dailyIndex = 0;
     result = doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
@@ -46,16 +47,9 @@ boolean WeatherClient::updateConditions(String apiKey, String location) {
 		alerts[i].severity = i+1;
 		alerts[i].title = String(i+1);
 		alerts[i].description = String(i+1);
-	}
-	Serial.println("Before sort");
-	for (int i=0; i<alertIndex; i++) {
-		Serial.print(i); Serial.print(": "); Serial.println(alerts[i].severity);
-	}	 */
+	}*/
+	Serial.println("Before qsort alertIndex: " + String(alertIndex));
 	qsort(alerts, alertIndex, sizeof(Alert), cmpfunc);
-/* 	Serial.println("After soft");
-	for (int i=0; i<alertIndex; i++) {
-		Serial.print(i); Serial.print(": "); Serial.println(alerts[i].severity);
-	} */
 	return result;
 }
 
@@ -246,7 +240,7 @@ void WeatherClient::endObject() {
 		if (alertIndex < maxAlerts) {
 			alertIndex++;
 		}
-		// Serial.println("Increase alertIndex, now " + String(alertIndex));
+		Serial.println("Increase alertIndex, now " + String(alertIndex));
 	} else if (parent() == "daily") {
 		// Serial.println("Increase dailyIndex");
 		if (dailyIndex < maxDaily) {
