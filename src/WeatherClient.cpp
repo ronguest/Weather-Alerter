@@ -16,9 +16,9 @@ uint16_t alertIndex;
 int cmpfunc(const void * a, const void * b) {
 	Alert *alertA = (Alert *)a;
 	Alert *alertB = (Alert *)b;
-	Serial.print("alertA.severity "); Serial.println(alertA->severity);
-	Serial.print("alertB.severity "); Serial.println(alertB->severity);
-	Serial.print("b > a? "); Serial.println(alertB->severity - alertA->severity);
+	// Serial.print("alertA.severity "); Serial.println(alertA->severity);
+	// Serial.print("alertB.severity "); Serial.println(alertB->severity);
+	// Serial.print("b > a? "); Serial.println(alertB->severity - alertA->severity);
 	return (alertB->severity - alertA->severity);
 }
 
@@ -151,7 +151,6 @@ void WeatherClient::value(String value) {
 			precipProbability = value.toInt();
 		} 
 	} else if (parent() == "alerts") {
-		// Serial.println("Got alerts");
 		if (current() == "description") { 
 			// Serial.println("description " + value);
 			alerts[alertIndex].description = value;
@@ -213,9 +212,6 @@ void WeatherClient::startDocument() {
 }
 void WeatherClient::endDocument() {
     // Serial.println(F("end document"));
-	// for (int i=0; i<dailyIndex; i++) {
-	// 	Serial.println(temperatureMax[i]);
-	// }
 }
 
 // startArray lets us know the key has a set of values
@@ -259,7 +255,7 @@ void WeatherClient::endObject() {
 	}	
 
 	// Objects in an array don't have a key/name so we can't pop in that case or we lost parentage
-	if (!inArray) {
+	if (!inArray && (current() != "alerts")) {
 		pop();
 	}
 }
