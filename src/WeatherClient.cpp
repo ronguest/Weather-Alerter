@@ -13,12 +13,10 @@ boolean inArray = false;
 uint16_t dailyIndex;
 uint16_t alertIndex;
 
+// Function for qsort to compare severity
 int cmpfunc(const void * a, const void * b) {
 	Alert *alertA = (Alert *)a;
 	Alert *alertB = (Alert *)b;
-	// Serial.print("alertA.severity "); Serial.println(alertA->severity);
-	// Serial.print("alertB.severity "); Serial.println(alertB->severity);
-	// Serial.print("b > a? "); Serial.println(alertB->severity - alertA->severity);
 	return (alertB->severity - alertA->severity);
 }
 
@@ -33,22 +31,6 @@ boolean WeatherClient::updateConditions(String apiKey, String location) {
 	alertIndex = 0;
 	dailyIndex = 0;
     result = doUpdate(443, "api.darksky.net", "/forecast/" + apiKey + "/" + location + "?exclude=minutely,hourly");
-	// Fake alert for text display testing
-/* 	alertIndex = 2;
-	alerts[0].severity = 3;
-	alerts[0].title = "Severity title";
-	alerts[0].description = "This is a very long line of text which should get broken up into two lines if I am very very luck";
-	alerts[1].severity = 2;
-	alerts[1].title = "Severity title2";
-	alerts[1].description = "This is ANOTHER very long line of text which should get broken up into two lines if I am very very luck"; */
-	// Fake alert data for sort testing
-	/* alertIndex = 3;
-	for (int i=0; i<alertIndex; i++) {
-		alerts[i].severity = i+1;
-		alerts[i].title = String(i+1);
-		alerts[i].description = String(i+1);
-	}*/
-	Serial.println("Before qsort alertIndex: " + String(alertIndex));
 	qsort(alerts, alertIndex, sizeof(Alert), cmpfunc);
 	return result;
 }
@@ -61,7 +43,6 @@ boolean WeatherClient::doUpdate(int port, char server[], String url) {
     JsonStreamingParser parser;
     // It might be better to have separate objects for each weather data source
     // As it is now the same code is processing keywords from diverse sources leading to potential conflictss
-    // Currently this is handled by a bit of a kludge: checking the parent keyword to see if it also matches the desired feed
     parser.setListener(this);
     WiFiClient client;
 	// Red LED output on the M0 Feather
@@ -132,16 +113,12 @@ void WeatherClient::key(String key) {
 void WeatherClient::value(String value) {
 	if (parent() == "currently") {
 		if (current() == "nearestStormDistance") { 
-			// Serial.println("nearestStormDistance " + value);
 			nearestStormDistance = value.toInt();
 		} else if (current() == "summary") {  
-			// Serial.println("summary " + value);
 			summary = value;
 		} else if (current() == "icon") { 
-			// Serial.println("icon " + value);
 			currentIcon = value;
 		} else if (current() == "precipProbability") { 
-			// Serial.println("precipProbability " + value);
 			precipProbability = value.toInt();
 		} 
 	} else if (parent() == "alerts") {
@@ -163,28 +140,20 @@ void WeatherClient::value(String value) {
 			alerts[alertIndex].title = value;
 		}
 	} else if (parent() == "data") {
-/* 		if (current() == "temperatureMax") {
-			Serial.print("save tempMax to index " + String(dailyIndex));
-			Serial.println(", temperatureMax " + value);
-			temperatureMax[dailyIndex] = value.toFloat();
-		} */
+		// ignored
 	} else {
 		// Either an unused/unknown parent or it is the Ambient Weather data which has no parent
 		if (current() == "hourlyrainin") {
 			rainIn = value;
-			// Serial.println("rainIn " + rainIn);
 		} else if (current() == "dailyrainin") {
 			rainDay = value;
-			// Serial.println("rainDay " + rainDay);
 		} else if (current() == "windspeedmph") {
 			windSpeed = (int) round(value.toFloat());
 		} else if (current() == "windgustmph") {
 			windGust = (int) round(value.toFloat());
 		} else if (current() == "tempf") { 
-			// Serial.println("temperature " + value);
 			temperature = (int) round(value.toFloat());
 		} else if (current() == "humidity") { 
-			// Serial.println("humidity " + value);
 			humidity = value.toInt();
 		}
 	}

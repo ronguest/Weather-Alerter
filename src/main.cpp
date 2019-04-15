@@ -10,15 +10,15 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
 long lastDownloadUpdate = -(1000L * UPDATE_INTERVAL_SECS)-1;    // Forces initial screen draw
 
 WeatherClient weather(1);
-Adafruit_ImageReader reader;     // Class w/image-reading functions
+Adafruit_ImageReader reader;     // For icon display
 ImageReturnCode imageStatus; 	// Status from image-reading functions
 DisplayMode displayMode;
 boolean updateSuccess;
+int pageNumber = 0;			// Which alert text to display
 
 void drawUpdate();
 void drawAlert(int index);
 String mapIcon(String s);
-int pageNumber = 0;			// Which alert text to display
 
 void setup() {
     //   time_t ntpTime;
@@ -45,10 +45,8 @@ void setup() {
     tft.fillScreen(WX_BLACK);
     tft.setFont(&largeFont);
     tft.setTextColor(WX_CYAN, WX_BLACK);
-    //   ui.setTextAlignment(CENTER);
     tft.setCursor(50, 160);
     tft.println(F("Connecting to WiFi"));
-    //   tft.drawString(120, 160, F("Connecting to WiFi"));
 
     // check for the presence of the shield:
     if (WiFi.status() == WL_NO_SHIELD) {
@@ -62,7 +60,7 @@ void setup() {
         Serial.print(F("Wifi connect to: "));
         Serial.println(ssid);
         status = WiFi.begin(ssid, pass);
-        // wait 10 seconds for connection
+        // wait for connection
         delay(5000);
     }
 
@@ -73,16 +71,13 @@ void setup() {
     } else {
         Serial.println("SD OK!");
     }
-
-	Serial.print("Display height: "); Serial.println(tft.height());
-	Serial.print("Display width: "); Serial.println(tft.width());
 }
 
 void loop() {
 	boolean success1, success2;
-    // Check if we should update weather information
+    // Check if time to update weather information
     if ((millis() - lastDownloadUpdate) > (1000 * UPDATE_INTERVAL_SECS)) {
-		tft.fillCircle(470, 10, 5, HX8357_BLUE);
+		tft.fillCircle(470, 10, 5, HX8357_BLUE);		// Blue status dot means update in progress
 		success1 = weather.updateConditions(DS_KEY, DS_location);
 		success2 = weather.updateLocal(AW_DEVICE, AW_APP_KEY, AW_API_KEY);
 		updateSuccess = success1 & success2;
@@ -117,6 +112,16 @@ void loop() {
 
 // Draw a page of alert details
 void drawAlert(int index) {
+	int y = 20;
+	int textLength;
+	int finalSpace;
+	int maxLines = 20;
+	int maxPerLine = 50;
+	int lineSize = 20;
+	int startPoint = 0;   // Position in text of next character to print
+	int16_t x1, y1;
+	uint16_t w, h;
+
 	tft.fillScreen(WX_BLACK);
 	tft.setFont(&smallFont);
 	tft.setTextColor(WX_CYAN, WX_BLACK);
@@ -125,39 +130,27 @@ void drawAlert(int index) {
 	} else {
 		tft.fillCircle(470, 10, 5, HX8357_RED);
 	}	
-	int y = 20;
-	int textLength;
-	int finalSpace;
-	int maxLines = 20;
-	int maxPerLine = 50;
-	int lineSize = 20;
-	int startPoint = 0;   // Position in text of next character to print
 
 	tft.setCursor(10,y);
 	tft.print(weather.getAlertTitle(index));
 	y += lineSize + 10; 	// Add a little extra space after title
+
 	textLength = weather.getAlertDescription(index).length();
 	while ((startPoint < textLength) && (maxLines > 0)) {
 		// Take initial cut at finding the last space in the next string we will print
 		finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine);
-		// Now we need to jump through some hoops because we are not using a monospaced font
-		// The NWS uses ALL CAPS in some text and lines full of all caps take up a lot more width
-		// So the simple method above fails in that case
-		// Should probably replace all of this code with something based on width for the actual font/chars, but this is simpler
-		int16_t x1, y1;
-		uint16_t w, h;
-		// 430 seems the practical max, out of 480
-		tft.getTextBounds(weather.getAlertDescription(index).substring(startPoint, finalSpace), 10, y, &x1, &y1, &w, &h);
-		// Serial.println(weather.getAlertDescription(index).substring(startPoint, startPoint+10));
-		// Serial.println("w: " + String(w));
 		if (finalSpace == -1 ) {
 			// It's possible the final substring doesn't have a space
 			finalSpace = textLength;
 		}
+
+		// The NWS uses ALL CAPS in some text and lines full of all caps take up a lot more width
+		// So we check the text bounds width and if it is wider than we want we reduce character count
+		// 430 seems the practical max, out of 480
+		tft.getTextBounds(weather.getAlertDescription(index).substring(startPoint, finalSpace), 10, y, &x1, &y1, &w, &h);
 		int mult = 0;
 		while (w > 430) {
-			// The initial cut will be too wide
-			// Shorten line until it fits by backing up the count of max characters per line
+			// The initial cut will be too wide. Shorten line until it fits by backing up the count of max characters per line
 			mult++;
 			finalSpace = weather.getAlertDescription(index).lastIndexOf(' ', startPoint + maxPerLine - (mult*5));
 			tft.getTextBounds(weather.getAlertDescription(index).substring(startPoint, finalSpace), 10, y, &x1, &y1, &w, &h);			
@@ -186,21 +179,21 @@ void drawUpdate() {
 		tft.fillCircle(470, 10, 5, HX8357_RED);
 	}	
 	tft.setFont(&largeFont);
-	// tft.setTextSize(2);
 	tft.setCursor(50,75);
 	tft.print((int)weather.getTemperature());
-	tft.print("F");
-	// tft.setCursor(150,50);
-	// tft.print(weather.getCurrentIcon());
+	tft.setFont(&smallFont);
+	tft.setCursor(tft.getCursorX(),tft.getCursorY()-17);
+	tft.print("o");			// ˚
 	char file[64] = "/Icons/";
 	strcat(file, mapIcon(weather.getCurrentIcon()).c_str());
 	strcat(file, ".bmp");
-// String icon = "/icons/" + mapIcon(weather.getCurrentIcon()) + ".bmp";
 	imageStatus = reader.drawBMP(file, tft, 200, 5);
-	// reader.printStatus(imageStatus);   // How'd we do?  	
+	tft.setFont(&largeFont);
 	tft.setCursor(350,75);
 	tft.print(weather.getHumidity());
-	tft.print("\045");
+	tft.setFont(&smallFont);
+	tft.setCursor(tft.getCursorX(),tft.getCursorY()-14);
+	tft.print("\045");			// % 
 
 	int y = 125;
 	tft.setFont(&smallFont);
@@ -208,8 +201,6 @@ void drawUpdate() {
 		Serial.println("Alert count: " + String(weather.getAlertCount()));
 		for (int i=0; i < min(weather.getAlertCount(), 4); i++) {
 			tft.setCursor(20,y);
-			// tft.print(weather.getAlertSeverity(0));
-			// tft.print(": ");
 			if (weather.getAlertSeverity(i) == 3) {
 				tft.setTextColor(WX_RED);
 			} else if (weather.getAlertSeverity(i) == 2) {
@@ -220,13 +211,10 @@ void drawUpdate() {
 			tft.print(weather.getAlertTitle(i));
 			y += 25;
 		}
-		// tft.setCursor(20,y);
-		// tft.print("Alert list done");
 	} else {
 		tft.setFont(&largeFont);
 		y += 10;
 		tft.setCursor(20, y);
-		//tft.print("No alerts");
 		tft.print(weather.getSummary());
 	}
 	tft.setFont(&smallFont);
@@ -238,7 +226,6 @@ void drawUpdate() {
 	tft.setCursor(20,300);
 	tft.print(weather.getWindSpeed());
 	tft.print(" mph || gusting ");
-	// tft.setCursor(220,300);
 	tft.print(weather.getWindGust());
 	tft.print(" mph");
 
